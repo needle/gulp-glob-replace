@@ -1,0 +1,36 @@
+{
+  "name": "gulp-glob-replace",
+  "version": "1.0.0",
+  "description": "Inject glob(s) into an existing file stream",
+  "main": "globReplace.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/needle/gulp-glob-replace"
+  },
+  "keywords": [
+    "gulpplugin",
+    "glob",
+    "replace"
+  ],
+  "author": "Rich Snapp <rich@needle.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/needle/gulp-glob-replace/issues"
+  },
+  "homepage": "https://github.com/needle/gulp-glob-replace",
+  "dependencies": {
+    "async": "^0.9.0",
+    "glob": "^4.0.6",
+    "glob2base": "0.0.11",
+    "gulp-util": "^3.0.1",
+    "lodash": "^2.4.1",
+    "node.extend": "^1.1.2",
+    "through2": "^0.6.2"
+  },
+  "devDependencies": {
+    "mocha": "^1.21.4"
+  }
+}
