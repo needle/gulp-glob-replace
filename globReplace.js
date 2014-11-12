@@ -1,4 +1,6 @@
 
+const NAME = "gulp-glob-replace";
+
 var glob        = require("glob"),
     glob2base   = require("glob2base"),
     through2    = require("through2"),
@@ -6,6 +8,7 @@ var glob        = require("glob"),
     _           = require("lodash"),
     async       = require("async"),
     File        = require("gulp-util").File,
+    PluginError = require("gulp-util").PluginError,
     fs          = require("fs"),
     path        = require("path")
 ;
@@ -13,12 +16,6 @@ var glob        = require("glob"),
 // http://stackoverflow.com/a/6969486
 function escapeRegExp(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-}
-
-function removeBase(file, base) {
-    file = path.normalize(file);
-    base = path.normalize(base);
-    return file.replace(new RegExp(["^(\./)?", escapeRegExp(base)].join("")), "");
 }
 
 module.exports = function(globs, opts) {
@@ -31,49 +28,51 @@ module.exports = function(globs, opts) {
         globber = null,
         base;
 
-    if(globs) {
-        // allow both positive and negative array of globs, or just a positive glob string.
-        if(!Array.isArray(globs)) {
-            globs = [globs];
-        }
-
-        globs.forEach(function(globStr) {
-            var positive = true;
-
-            if(globStr[0] === "!") {
-                positive = false;
-                globStr = globStr.slice(1);
-            }
-
-            globber = new glob.Glob(globStr, {
-                sync: true,
-                mark: true
-            });
-
-            if(positive) {
-                base = glob2base(globber);
-            }
-
-            globber.found.forEach(function(file) {
-                // exclude folders
-                if(file.slice(-1) !== "/") {
-                    var index = removeBase(file, base);
-
-                    if(positive) {
-                        fileMap[index] = file;
-                    } else {
-                        delete fileMap[index];
-                    }
-                }
-             });
-        });
+    // allow both positive and negative array of globs, or just a positive glob string.
+    if(!Array.isArray(globs)) {
+        globs = [globs];
     }
 
+    globs.forEach(function(globStr) {
+        if(typeof globStr !== "string") {
+            throw new PluginError(NAME, "invalid glob provided");
+        }
+
+        var positive = true;
+
+        if(globStr[0] === "!") {
+            positive = false;
+            globStr = globStr.slice(1);
+        }
+
+        globber = new glob.Glob(globStr, {
+            sync: true,
+            mark: true
+        });
+
+        if(positive) {
+            base = glob2base(globber);
+        }
+
+        globber.found.forEach(function(file) {
+            // exclude folders
+            if(file.slice(-1) !== "/") {
+                var index = path.relative(base, file);
+
+                if(positive) {
+                    fileMap[index] = file;
+                } else {
+                    delete fileMap[index];
+                }
+            }
+         });
+    });
+
     return through2.obj(function(file, enc, done) {
-        var index = removeBase(file.path, file.base),
+        var index = file.relative,
             fileName = fileMap[index] || false,
             stream = this;
-        if(fileName) {
+        if(fileName && !file.isNull()) {
             fs.readFile(fileName, null, function (err, buffer) {
                 if(opts.extendJson && path.extname(fileName).toLowerCase() === ".json") {
                     file.contents = new Buffer(

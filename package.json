@@ -1,6 +1,6 @@
 {
   "name": "gulp-glob-replace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Inject glob(s) into an existing file stream",
   "main": "globReplace.js",
   "scripts": {
